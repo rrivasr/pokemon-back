@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"errors"
-	"pokemon-back/internal/config"
+	container2 "pokemon-back/internal/config/container"
 	"pokemon-back/internal/presentation"
 )
 
 func StartApp() error {
-	container := &config.ContainerDig{}
+	container := &container2.ContainerDig{}
 	c, err := container.BuildContainer()
 	if err != nil {
 		return err

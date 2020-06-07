@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
+	"pokemon-back/internal/config"
 	"pokemon-back/internal/core/domain"
 	"pokemon-back/internal/repository"
 	"time"
@@ -15,6 +16,7 @@ type ILogin interface {
 
 type Login struct {
 	Repository repository.IRepository
+	TokenConfig *config.TokenConfig
 }
 
 func (l *Login) Autenticar(trainerDTO *TrainerDTO) (*TrainerDTO, error) {
@@ -43,11 +45,11 @@ func (l *Login) Autenticar(trainerDTO *TrainerDTO) (*TrainerDTO, error) {
 func (l *Login) crearToken(trainer *domain.Trainer) (*string, error) {
 	claims := jwt.MapClaims{
 		"nombre": *trainer.Nombre,
-		"exp": time.Now().Add(time.Minute * 15).Unix(),
+		"exp": time.Now().Add(time.Minute * time.Duration(l.TokenConfig.Time)).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
-	token.Header["kid"] = "llaveuno"
-	tokenString, err := token.SignedString([]byte("estoesunallave"))
+	token.Header["kid"] = l.TokenConfig.Kid
+	tokenString, err := token.SignedString([]byte(l.TokenConfig.Key))
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +66,9 @@ func (l *Login) validarContrasena(loginContrasena string, contrasena string) err
 	return nil
 }
 
-func NewLogin(r *repository.Repository) *Login {
+func NewLogin(r *repository.Repository, tc *config.TokenConfig) *Login {
 	return &Login{
 		Repository: r,
+		TokenConfig: tc,
 	}
 }
